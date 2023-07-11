@@ -135,7 +135,7 @@ public class Server {
                 while ((input = in.readLine()) != null) {
                     Server.broadcastMessage(input, this);
 
-                    System.out.println(this.ClientType+" "+this.PublisherNumber+" says: "+input);
+                    System.out.println(this.ClientType+" "+this.PublisherNumber+" says regarding "+this.Topic+": "+input);
 
                     if(input.equalsIgnoreCase("terminate")){
                         if(this.ClientType.equalsIgnoreCase("publisher")){
