@@ -11,7 +11,7 @@ public class Server {
     private static final int PORT = 5000;
     private static List<ClientHandler> publisher = new ArrayList<>();
     private static List<ClientHandler> subscriber = new ArrayList<>();
-    private static List<ClientHandler> clients = new ArrayList<>();
+    private static List<String> topicList = new ArrayList<>();
     private static int PublisherNumber = 1;
     private static int SubscriberNumber = 1;
 
@@ -28,6 +28,18 @@ public class Server {
         }
     }
 
+    public static void addTopic(String topic){
+        topicList.add(topic);
+    }
+
+    public static boolean checkTopic(String topic){
+        if(topicList.contains(topic)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     private static void startServer(int port) {
         try {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -37,13 +49,19 @@ public class Server {
                     Socket clientSocket = serverSocket.accept();
                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String clientTypeWithTopic = in.readLine();
-                    System.out.println(clientTypeWithTopic);
                     String clientType = clientTypeWithTopic.split(" ")[0];
                     String clientTopic = clientTypeWithTopic.split(" ")[1];
 
                     if(clientType.equalsIgnoreCase("publisher")){
+                        addTopic(clientTopic);
                         System.out.println(clientType+" "+PublisherNumber+" connected (Topic:- "+clientTopic+"): " + clientSocket.getInetAddress().getHostAddress());
                     }else if(clientType.equalsIgnoreCase("subscriber")){
+                        if(checkTopic(clientTopic) == false){
+                            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),true);
+                            out.println("Topic not found.");
+                            clientSocket.close();
+                            continue;
+                        }
                         System.out.println(clientType+" "+SubscriberNumber+" connected (Topic:- "+clientTopic+"): " + clientSocket.getInetAddress().getHostAddress());
                     }else{
                         System.out.println("Unknown client type.");
@@ -91,7 +109,15 @@ public class Server {
     }
 
     static void removeClient(ClientHandler client) {
-        clients.remove(client);
+        String clientType = client.getClientType();
+        
+        if(clientType.equalsIgnoreCase("publisher")){
+            publisher.remove(client);
+        }else if(clientType.equalsIgnoreCase("subscriber")){
+            subscriber.remove(client);
+        }else{
+            System.out.println("Unknown client type.");
+        }
     }
 
     static class ClientHandler extends Thread {
